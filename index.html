@@ -1,27 +1,781 @@
 <!DOCTYPE html>
-<html lang="">
-  <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <link rel="icon" href="/favicon.ico" />
-    <title>抗原、核酸检测统计</title>
-    <link href="/css/app.dd9f9829.css" rel="preload" as="style" />
-    <link href="/css/chunk-vendors.9181e156.css" rel="preload" as="style" />
-    <link href="/js/app.8fc05bf2.js" rel="preload" as="script" />
-    <link href="/js/chunk-vendors.8e1e23ec.js" rel="preload" as="script" />
-    <link href="/css/chunk-vendors.9181e156.css" rel="stylesheet" />
-    <link href="/css/app.dd9f9829.css" rel="stylesheet" />
-  </head>
-  <body>
-    <noscript
-      ><strong
-        >We're sorry but chart-26 doesn't work properly without JavaScript
-        enabled. Please enable it to continue.</strong
-      ></noscript
-    >
-    <div id="app"></div>
-    <script src="/js/chunk-vendors.8e1e23ec.js"></script>
-    <script src="/js/app.8fc05bf2.js"></script>
-  </body>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DiskCleaner — 磁盘空间分析与清理工具</title>
+    <meta name="description" content="快速找到磁盘空间的罪魁祸首，一键清理，立竿见影。">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #dbeafe;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --radius: 12px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.08);
+            --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+            color: var(--gray-800);
+            line-height: 1.7;
+            background: #fff;
+            overflow-x: hidden;
+        }
+
+        /* ── Navigation ── */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--gray-200);
+            transition: box-shadow 0.3s;
+        }
+        nav.scrolled { box-shadow: var(--shadow); }
+        .nav-inner {
+            max-width: 1120px; margin: 0 auto;
+            padding: 0 24px; height: 60px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .nav-logo {
+            font-weight: 800; font-size: 20px; color: var(--primary);
+            text-decoration: none; display: flex; align-items: center; gap: 8px;
+        }
+        .nav-logo svg { width: 24px; height: 24px; }
+        .nav-links { display: flex; gap: 28px; align-items: center; }
+        .nav-links a {
+            text-decoration: none; color: var(--gray-600); font-size: 14px;
+            font-weight: 500; transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--primary); }
+        .nav-cta {
+            background: var(--primary); color: #fff !important;
+            padding: 8px 20px; border-radius: 8px; font-weight: 600 !important;
+            transition: background 0.2s !important;
+        }
+        .nav-cta:hover { background: var(--primary-dark); }
+
+        /* ── Hero ── */
+        .hero {
+            min-height: 100vh; display: flex; align-items: center;
+            justify-content: center; text-align: center;
+            padding: 120px 24px 80px;
+            background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 50%, #fefce8 100%);
+            position: relative; overflow: hidden;
+        }
+        .hero::before {
+            content: ''; position: absolute; top: -200px; right: -200px;
+            width: 600px; height: 600px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(37,99,235,0.08) 0%, transparent 70%);
+        }
+        .hero::after {
+            content: ''; position: absolute; bottom: -150px; left: -150px;
+            width: 400px; height: 400px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%);
+        }
+        .hero-content { position: relative; z-index: 1; max-width: 780px; }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #fff; border: 1px solid var(--gray-200);
+            padding: 6px 16px; border-radius: 100px; font-size: 13px;
+            color: var(--gray-600); margin-bottom: 24px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
+        .hero h1 {
+            font-size: clamp(36px, 6vw, 64px); font-weight: 900;
+            line-height: 1.15; letter-spacing: -0.02em;
+            color: var(--gray-900); margin-bottom: 20px;
+        }
+        .hero h1 .highlight {
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero p {
+            font-size: 18px; color: var(--gray-500); max-width: 560px;
+            margin: 0 auto 36px; line-height: 1.8;
+        }
+        .hero-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 14px 28px; border-radius: 10px; font-size: 15px;
+            font-weight: 600; text-decoration: none; transition: all 0.2s;
+            cursor: pointer; border: none;
+        }
+        .btn-primary {
+            background: var(--primary); color: #fff;
+            box-shadow: 0 4px 16px rgba(37,99,235,0.3);
+        }
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            box-shadow: 0 6px 24px rgba(37,99,235,0.4);
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: #fff; color: var(--gray-700);
+            border: 1px solid var(--gray-200);
+        }
+        .btn-secondary:hover { border-color: var(--gray-400); }
+
+        /* ── Pain Points ── */
+        .pain {
+            padding: 100px 24px;
+            background: linear-gradient(135deg, var(--gray-900) 0%, #1a1a2e 100%);
+            color: #fff; position: relative; overflow: hidden;
+        }
+        .pain::before {
+            content: ''; position: absolute; top: -100px; right: -100px;
+            width: 400px; height: 400px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(239,68,68,0.1) 0%, transparent 70%);
+        }
+        .pain-inner { max-width: 900px; margin: 0 auto; text-align: center; position: relative; z-index: 1; }
+        .pain h2 { font-size: 32px; font-weight: 800; margin-bottom: 48px; }
+        .pain-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+        }
+        .pain-item {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px; padding: 32px 20px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .pain-item:hover {
+            transform: translateY(-6px);
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.2);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        .pain-icon { font-size: 40px; margin-bottom: 16px; }
+        .pain-item p { font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.8; }
+
+        /* ── Features ── */
+        .features {
+            padding: 120px 24px;
+            background: linear-gradient(180deg, #fff 0%, var(--gray-50) 100%);
+            position: relative;
+        }
+        .features::before {
+            content: '';
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 800px; height: 800px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(37,99,235,0.04) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .section-inner { max-width: 1120px; margin: 0 auto; position: relative; z-index: 1; }
+        .section-label {
+            text-transform: uppercase; font-size: 12px; font-weight: 700;
+            letter-spacing: 0.1em; color: var(--primary); margin-bottom: 8px;
+        }
+        .section-title {
+            font-size: clamp(28px, 4vw, 40px); font-weight: 800;
+            color: var(--gray-900); margin-bottom: 12px;
+        }
+        .section-desc { color: var(--gray-500); font-size: 16px; margin-bottom: 56px; max-width: 560px; }
+
+        /* Feature layout: 1 hero + 2 rows of 2 + 1 full-width summary */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+        .feature-grid .feature-card:nth-child(1) { grid-column: span 3; }
+        .feature-grid .feature-card:nth-child(6) { grid-column: span 3; }
+
+        .feature-card {
+            background: #fff;
+            border: 1px solid var(--gray-200);
+            border-radius: 16px; padding: 32px 28px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative; overflow: hidden;
+        }
+        .feature-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--primary), #7c3aed);
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .feature-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 8px 32px rgba(37,99,235,0.12);
+            transform: translateY(-4px);
+        }
+        .feature-card:hover::before { opacity: 1; }
+
+        .feature-icon {
+            width: 52px; height: 52px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; margin-bottom: 20px;
+            position: relative;
+        }
+        .fi-blue  { background: linear-gradient(135deg, #dbeafe, #bfdbfe); }
+        .fi-green { background: linear-gradient(135deg, #dcfce7, #bbf7d0); }
+        .fi-yellow{ background: linear-gradient(135deg, #fef3c7, #fde68a); }
+        .fi-red   { background: linear-gradient(135deg, #fee2e2, #fecaca); }
+        .fi-purple{ background: linear-gradient(135deg, #ede9fe, #ddd6fe); }
+        .fi-cyan  { background: linear-gradient(135deg, #cffafe, #a5f3fc); }
+
+        .feature-card h3 {
+            font-size: 18px; font-weight: 700; color: var(--gray-900);
+            margin-bottom: 8px;
+        }
+        .feature-card p { font-size: 14px; color: var(--gray-500); line-height: 1.75; }
+
+        /* Hero and summary cards get larger title */
+        .feature-grid .feature-card:nth-child(1) h3,
+        .feature-grid .feature-card:nth-child(6) h3 { font-size: 20px; }
+
+        /* ── How It Works (Steps) ── */
+        .steps { padding: 100px 24px; background: #fff; }
+        .steps-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 40px; counter-reset: step;
+        }
+        .step-item {
+            text-align: center; counter-increment: step; position: relative;
+        }
+        .step-num {
+            width: 64px; height: 64px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), #4f46e5); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; font-weight: 800; margin: 0 auto 20px;
+            box-shadow: 0 6px 24px rgba(37,99,235,0.3);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .step-item:hover .step-num {
+            transform: scale(1.1);
+            box-shadow: 0 8px 32px rgba(37,99,235,0.4);
+        }
+        .step-item h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; color: var(--gray-900); }
+        .step-item p { font-size: 14px; color: var(--gray-500); max-width: 240px; margin: 0 auto; line-height: 1.75; }
+
+        /* ── Preview ── */
+        .preview { padding: 100px 24px; }
+        .preview-img {
+            max-width: 860px; margin: 0 auto; display: block;
+            border-radius: 16px; box-shadow: var(--shadow-lg);
+            border: 1px solid var(--gray-200); width: 100%;
+        }
+        /* ── Scenarios ── */
+        .scenarios { padding: 100px 24px; background: #fff; }
+        .scenario-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .scenario-card {
+            background: var(--gray-50); border: 1px solid var(--gray-200);
+            border-radius: 16px; padding: 28px 24px;
+            display: flex; gap: 16px; align-items: flex-start;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .scenario-card:hover {
+            background: #fff;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+            transform: translateY(-4px);
+            border-color: var(--primary);
+        }
+        .scenario-emoji {
+            font-size: 36px; flex-shrink: 0;
+            width: 56px; height: 56px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            background: #fff; border: 1px solid var(--gray-200);
+        }
+        .scenario-card h3 { font-size: 16px; font-weight: 700; color: var(--gray-900); margin-bottom: 6px; }
+        .scenario-card .pain-text { font-size: 13px; color: var(--gray-500); margin-bottom: 8px; line-height: 1.6; }
+        .scenario-card .solution {
+            font-size: 13px; color: var(--primary); font-weight: 600;
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+
+        /* ── Pricing ── */
+        .pricing {
+            padding: 100px 24px;
+            background: linear-gradient(180deg, var(--gray-50) 0%, #fff 100%);
+        }
+        .pricing-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px; max-width: 900px; margin: 0 auto;
+        }
+        .price-card {
+            background: #fff; border: 2px solid var(--gray-200);
+            border-radius: 20px; padding: 40px 28px; text-align: center;
+            position: relative; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .price-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
+        .price-card.featured {
+            border-color: var(--primary);
+            background: linear-gradient(180deg, #eff6ff 0%, #fff 40%);
+            box-shadow: 0 8px 40px rgba(37,99,235,0.12);
+        }
+        .price-badge {
+            position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--primary), #4f46e5); color: #fff;
+            padding: 6px 20px; border-radius: 100px;
+            font-size: 12px; font-weight: 700; letter-spacing: 0.05em;
+            box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+        }
+        .price-card h3 { font-size: 20px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px; }
+        .price-card .price { font-size: 36px; font-weight: 900; color: var(--gray-900); margin: 20px 0; }
+        .price-card .price small { font-size: 14px; font-weight: 400; color: var(--gray-500); }
+        .price-card ul { list-style: none; padding: 0; margin: 24px 0 28px; }
+        .price-card ul li {
+            padding: 10px 0; font-size: 14px; color: var(--gray-600);
+            border-bottom: 1px solid var(--gray-100);
+        }
+        .price-card ul li:last-child { border: none; }
+        .price-card ul li::before { content: '✓ '; color: #22c55e; font-weight: 700; }
+        .price-btn {
+            display: inline-block; width: 100%; padding: 14px;
+            border-radius: 12px; font-size: 15px; font-weight: 600;
+            text-decoration: none; transition: all 0.2s;
+        }
+        .price-btn-primary {
+            background: var(--primary); color: #fff;
+            box-shadow: 0 4px 12px rgba(37,99,235,0.25);
+        }
+        .price-btn-primary:hover { background: var(--primary-dark); box-shadow: 0 6px 20px rgba(37,99,235,0.35); }
+        .price-btn-secondary {
+            background: var(--gray-100); color: var(--gray-700);
+        }
+        .price-btn-secondary:hover { background: var(--gray-200); }
+
+        /* ── FAQ ── */
+        .faq { padding: 100px 24px; background: var(--gray-50); }
+        .faq-list { max-width: 700px; margin: 0 auto; }
+        .faq-item { border-bottom: 1px solid var(--gray-200); }
+        .faq-q {
+            padding: 20px 0; font-size: 16px; font-weight: 600;
+            color: var(--gray-900); cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+            user-select: none;
+        }
+        .faq-q::after {
+            content: '+'; font-size: 22px; font-weight: 300;
+            color: var(--gray-400); transition: transform 0.2s;
+        }
+        .faq-item.open .faq-q::after { content: '−'; }
+        .faq-a {
+            max-height: 0; overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            font-size: 14px; color: var(--gray-500); line-height: 1.8;
+        }
+        .faq-item.open .faq-a { max-height: 200px; padding-bottom: 20px; }
+
+        /* ── Platforms ── */
+        .platforms { padding: 80px 24px; }
+        .platform-row {
+            display: flex; gap: 24px; justify-content: center;
+            flex-wrap: wrap; max-width: 600px; margin: 0 auto;
+        }
+        .platform-chip {
+            display: flex; align-items: center; gap: 8px;
+            padding: 12px 24px; border-radius: 100px;
+            border: 1px solid var(--gray-200); font-size: 14px;
+            font-weight: 600; color: var(--gray-700);
+        }
+        .platform-chip .status {
+            width: 8px; height: 8px; border-radius: 50%;
+        }
+        .status.full { background: #22c55e; }
+        .status.partial { background: var(--accent); }
+
+        /* ── CTA ── */
+        .cta {
+            padding: 100px 24px; text-align: center;
+            background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+            color: #fff;
+        }
+        .cta h2 { font-size: clamp(28px, 4vw, 40px); font-weight: 800; margin-bottom: 12px; }
+        .cta p { font-size: 16px; opacity: 0.85; margin-bottom: 32px; }
+        .cta .btn-white {
+            background: #fff; color: var(--primary);
+            padding: 14px 32px; border-radius: 10px;
+            font-size: 15px; font-weight: 700;
+            text-decoration: none; display: inline-flex;
+            align-items: center; gap: 8px;
+            transition: all 0.2s;
+        }
+        .cta .btn-white:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+        .cta-contact { margin-top: 20px; font-size: 14px; opacity: 0.7; }
+
+        /* ── Footer ── */
+        footer {
+            padding: 32px 24px; text-align: center;
+            font-size: 13px; color: var(--gray-400);
+            border-top: 1px solid var(--gray-200);
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+            .feature-grid .feature-card:nth-child(1),
+            .feature-grid .feature-card:nth-child(6) {
+                grid-column: span 1;
+            }
+        }
+        @media (max-width: 640px) {
+            .nav-links { display: none; }
+            .hero { padding: 100px 20px 60px; }
+            .hero h1 { font-size: 32px; }
+            .hero-buttons { flex-direction: column; align-items: center; }
+        }
+
+        /* ── Scroll Animations ── */
+        .fade-up {
+            opacity: 0; transform: translateY(24px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .fade-up.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav id="navbar">
+    <div class="nav-inner">
+        <a href="#" class="nav-logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg>
+            DiskCleaner
+        </a>
+        <div class="nav-links">
+            <a href="#features">功能</a>
+            <a href="#scenarios">场景</a>
+            <a href="#pricing">授权</a>
+            <a href="#faq">FAQ</a>
+            <a href="#cta" class="nav-cta">获取工具</a>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+    <div class="hero-content">
+        <div class="hero-badge">
+            <span class="dot"></span>
+            Windows · macOS · Linux
+        </div>
+        <h1>快速找到磁盘空间的<br><span class="highlight">"罪魁祸首"</span></h1>
+        <p>可视化分析 · 一键清理 · 安全保护 —— 让磁盘空间管理变得简单。</p>
+        <div class="hero-buttons">
+            <a href="#cta" class="btn btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                免费下载试用
+            </a>
+            <a href="#features" class="btn btn-secondary">了解更多 →</a>
+        </div>
+    </div>
+</section>
+
+<!-- Pain Points -->
+<section class="pain">
+    <div class="pain-inner">
+        <h2>你的磁盘是不是也这样？</h2>
+        <div class="pain-grid">
+            <div class="pain-item">
+                <div class="pain-icon">🔴</div>
+                <p>C 盘又红了<br>不知道是什么占用了空间</p>
+            </div>
+            <div class="pain-item">
+                <div class="pain-icon">📦</div>
+                <p>项目里一堆 node_modules、__pycache__<br>每个都好几个 GB</p>
+            </div>
+            <div class="pain-item">
+                <div class="pain-icon">📂</div>
+                <p>下载文件夹堆积如山<br>却不知道哪个文件最大</p>
+            </div>
+            <div class="pain-item">
+                <div class="pain-icon">🧹</div>
+                <p>装了各种清理软件<br>结果它们自己占了几百 MB</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="steps">
+    <div class="section-inner">
+        <div class="section-label">使用流程</div>
+        <div class="section-title">三步搞定</div>
+        <div class="section-desc">无需任何学习成本，打开就能用</div>
+        <div class="steps-grid">
+            <div class="step-item">
+                <div class="step-num">1</div>
+                <h3>选择目录</h3>
+                <p>输入路径或点击浏览，选择要分析的目录</p>
+            </div>
+            <div class="step-item">
+                <div class="step-num">2</div>
+                <h3>扫描分析</h3>
+                <p>多线程快速扫描，实时显示每个文件的精确大小</p>
+            </div>
+            <div class="step-item">
+                <div class="step-num">3</div>
+                <h3>勾选清理</h3>
+                <p>选中不需要的内容，确认后即刻释放磁盘空间</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features -->
+<section class="features" id="features">
+    <div class="section-inner">
+        <div class="section-label">核心优势</div>
+        <div class="section-title">为什么选择 DiskCleaner？</div>
+        <div class="section-desc">快、准、稳、易用，每个细节都经过打磨</div>
+        <div class="feature-grid">
+            <div class="feature-card fade-up">
+                <div class="feature-icon fi-blue">⚡</div>
+                <h3>多线程扫描</h3>
+                <p>充分利用 CPU 核心并行扫描，速度是单线程工具的多倍，大型目录几分钟搞定。</p>
+            </div>
+            <div class="feature-card fade-up">
+                <div class="feature-icon fi-green">🎯</div>
+                <h3>精准累加</h3>
+                <p>自底向上逐层累加目录大小，每一个字节都被计算在内，不是粗略估算。</p>
+            </div>
+            <div class="feature-card fade-up">
+                <div class="feature-icon fi-red">🛡️</div>
+                <h3>关键目录保护</h3>
+                <p>系统目录自动保护，误选时弹出红色警告，需要明确确认才能继续，防止系统崩溃。</p>
+            </div>
+            <div class="feature-card fade-up">
+                <div class="feature-icon fi-yellow">🧭</div>
+                <h3>面包屑导航</h3>
+                <p>可点击的路径面包屑，一键跳转任意层级。双击进入子目录，返回上级只需一步。</p>
+            </div>
+            <div class="feature-card fade-up">
+                <div class="feature-icon fi-purple">📊</div>
+                <h3>智能排序</h3>
+                <p>目录和文件自动按大小降序排列，空间大户一目了然，不再翻找。</p>
+            </div>
+            <div class="feature-card fade-up">
+                <div class="feature-icon fi-cyan">📋</div>
+                <h3>全选与排除</h3>
+                <p>一键全选/取消选择，实时显示数量。支持自定义排除列表，系统目录自动跳过。</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Preview -->
+<section class="preview">
+    <div class="section-inner">
+        <div class="section-label">界面预览</div>
+        <div class="section-title">简洁而强大</div>
+        <div class="section-desc">没有花哨的广告和捆绑软件，打开就是工具本身</div>
+        <img src="产品截图.png" alt="DiskCleaner 产品界面 — 扫描 pnpm-store 目录，清晰展示每个子目录大小，支持勾选清理" class="preview-img">
+    </div>
+</section>
+
+<!-- Scenarios -->
+<section class="scenarios" id="scenarios">
+    <div class="section-inner">
+        <div class="section-label">适用场景</div>
+        <div class="section-title">谁需要 DiskCleaner？</div>
+        <div class="section-desc">无论你是开发者还是普通用户，都能从中受益</div>
+        <div class="scenario-grid">
+            <div class="scenario-card">
+                <div class="scenario-emoji">💻</div>
+                <div>
+                    <h3>开发者</h3>
+                    <p class="pain-text">node_modules 越来越大，不知道哪些项目占空间最多</p>
+                    <span class="solution">→ 扫描项目目录，按大小排序，一键选中清理</span>
+                </div>
+            </div>
+            <div class="scenario-card">
+                <div class="scenario-emoji">🖥️</div>
+                <div>
+                    <h3>运维人员</h3>
+                    <p class="pain-text">服务器磁盘告警，需要快速定位大文件</p>
+                    <span class="solution">→ 扫描 /var 或任意目录，秒级定位空间大户</span>
+                </div>
+            </div>
+            <div class="scenario-card">
+                <div class="scenario-emoji">👤</div>
+                <div>
+                    <h3>普通用户</h3>
+                    <p class="pain-text">C 盘红了但不知道是什么占的</p>
+                    <span class="solution">→ 扫描 C 盘，看看哪些文件夹最大</span>
+                </div>
+            </div>
+            <div class="scenario-card">
+                <div class="scenario-emoji">📈</div>
+                <div>
+                    <h3>数据分析师</h3>
+                    <p class="pain-text">下载目录堆积，历史数据集占用大量空间</p>
+                    <span class="solution">→ 按大小排序，快速识别不需要的旧文件</span>
+                </div>
+            </div>
+            <div class="scenario-card">
+                <div class="scenario-emoji">🎨</div>
+                <div>
+                    <h3>设计师/视频工作者</h3>
+                    <p class="pain-text">缓存文件、临时文件占用大量空间</p>
+                    <span class="solution">→ 扫描工作目录，精准定位并清理</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing -->
+<section class="pricing" id="pricing">
+    <div class="section-inner">
+        <div class="section-label" style="text-align:center;">授权方案</div>
+        <div class="section-title" style="text-align:center;">选择适合你的方案</div>
+        <div class="section-desc" style="text-align:center;margin-left:auto;margin-right:auto;">试用期间享有全部功能，无任何限制</div>
+        <div class="pricing-grid">
+            <div class="price-card">
+                <h3>免费试用</h3>
+                <div class="price">¥0 <small>/ 24 小时</small></div>
+                <ul>
+                    <li>完整功能无限制</li>
+                    <li>每台机器一次</li>
+                    <li>无需注册</li>
+                </ul>
+                <a href="#cta" class="price-btn price-btn-secondary">立即体验</a>
+            </div>
+            <div class="price-card featured">
+                <div class="price-badge">推荐</div>
+                <h3>限时授权</h3>
+                <div class="price">联系询价</div>
+                <ul>
+                    <li>按天/按秒灵活配置</li>
+                    <li>适合短期项目使用</li>
+                    <li>实时倒计时显示</li>
+                </ul>
+                <a href="mailto:bysking@qq.com" class="price-btn price-btn-primary">联系我们</a>
+            </div>
+            <div class="price-card">
+                <h3>永久授权</h3>
+                <div class="price">一次购买</div>
+                <ul>
+                    <li>永久使用</li>
+                    <li>一机一码绑定</li>
+                    <li>随时重新激活</li>
+                </ul>
+                <a href="mailto:bysking@qq.com" class="price-btn price-btn-secondary">联系我们</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq" id="faq">
+    <div class="section-inner">
+        <div class="section-label">常见问题</div>
+        <div class="section-title">FAQ</div>
+        <div class="section-desc">你想知道的，都在这里</div>
+        <div class="faq-list">
+            <div class="faq-item">
+                <div class="faq-q">试用过期了怎么办？</div>
+                <div class="faq-a">联系 bysking@qq.com 获取授权密钥，在菜单栏 "帮助 → 授权管理" 中输入即可重新激活。</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q">会不会误删系统文件？</div>
+                <div class="faq-a">程序内置了系统关键目录保护，尝试选择 Windows、Program Files、System 等目录时会弹出红色警告，需要手动确认才能继续。</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q">扫描会不会很慢？</div>
+                <div class="faq-a">多线程扫描充分利用 CPU，通常几十 GB 的目录几分钟就能完成。扫描过程中可随时中断。</div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-q">需要安装 Python 吗？</div>
+                <div class="faq-a">不需要。已打包成独立可执行文件，双击即可运行。Windows 版约 11 MB，macOS 版为 .app 应用。</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Platforms -->
+<section class="platforms">
+    <div class="section-inner" style="text-align:center;">
+        <div class="section-label">跨平台支持</div>
+        <div class="section-title" style="margin-bottom:32px;">一个工具，多系统通用</div>
+        <div class="platform-row">
+            <div class="platform-chip"><span class="status full"></span> Windows 10/11</div>
+            <div class="platform-chip"><span class="status full"></span> macOS</div>
+            <div class="platform-chip"><span class="status partial"></span> Linux</div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta" id="cta">
+    <h2>准备好释放你的磁盘空间了吗？</h2>
+    <p>免费试用 24 小时，完整功能无限制，无需注册。</p>
+    <a href="mailto:bysking@qq.com" class="btn-white">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 01-2.06 0L2 7"/></svg>
+        获取授权 / 咨询
+    </a>
+    <p class="cta-contact">联系邮箱：bysking@qq.com</p>
+</section>
+
+<!-- Footer -->
+<footer>
+    <p>&copy; 2026 DiskCleaner · bysking · 让磁盘空间管理变得简单</p>
+</footer>
+
+<script>
+    // Navbar shadow on scroll
+    const nav = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+        nav.classList.toggle('scrolled', window.scrollY > 10);
+    });
+
+    // FAQ accordion
+    document.querySelectorAll('.faq-q').forEach(q => {
+        q.addEventListener('click', () => {
+            const item = q.parentElement;
+            const wasOpen = item.classList.contains('open');
+            document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+            if (!wasOpen) item.classList.add('open');
+        });
+    });
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+        a.addEventListener('click', e => {
+            const target = document.querySelector(a.getAttribute('href'));
+            if (target) {
+                e.preventDefault();
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+
+    // Scroll-triggered fade-up animations
+    const observer = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry, i) => {
+                if (entry.isIntersecting) {
+                    setTimeout(() => entry.target.classList.add('visible'), i * 80);
+                    observer.unobserve(entry.target);
+                }
+            });
+        },
+        { threshold: 0.15 }
+    );
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+</script>
+
+</body>
 </html>
