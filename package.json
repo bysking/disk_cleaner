@@ -5,7 +5,9 @@
   "description": "> 专业级磁盘空间分析与清理工具 | 作者: bysking | 联系: bysking@qq.com",
   "main": "index.js",
   "scripts": {
-    "build": "tsc -b",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "cf-typegen": "wrangler types",
     "check": " wrangler deploy --dry-run",
     "deploy": "wrangler deploy"
@@ -29,5 +31,8 @@
   "homepage": "https://github.com/bysking/disk_cleaner#readme",
   "dependencies": {
     "wrangler": "^4.92.0"
+  },
+  "devDependencies": {
+    "vite": "^8.0.13"
   }
 }
