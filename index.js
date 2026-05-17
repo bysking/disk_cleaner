@@ -1,3 +1,5 @@
 export default {
-  // Your code here
-}
+  fetch() {
+    // code
+  },
+};

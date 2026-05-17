@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "cf-typegen": "wrangler types",
     "check": " wrangler deploy --dry-run",
-    "deploy": "wrangler deploy"
+    "start-deploy": "wrangler deploy"
   },
   "cloudflare": {
     "label": "Vite React Template",
