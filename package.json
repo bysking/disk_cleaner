@@ -1,0 +1,33 @@
+{
+  "name": "disk_cleaner",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "> 专业级磁盘空间分析与清理工具 | 作者: bysking | 联系: bysking@qq.com",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc -b",
+    "cf-typegen": "wrangler types",
+    "check": " wrangler deploy --dry-run",
+    "deploy": "wrangler deploy"
+  },
+  "cloudflare": {
+    "label": "Vite React Template",
+    "categories": [],
+    "preview_icon_url": "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/532a5378-9717-4964-385b-5fafd2160200/public",
+    "preview_image_url": "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/ec7f4be5-d1d6-4e94-0851-126341745400/preview",
+    "publish": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bysking/disk_cleaner.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bysking/disk_cleaner/issues"
+  },
+  "homepage": "https://github.com/bysking/disk_cleaner#readme",
+  "dependencies": {
+    "wrangler": "^4.92.0"
+  }
+}
